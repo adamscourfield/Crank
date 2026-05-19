@@ -1,0 +1,51 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-[#fafafa] text-[#1a1a1a] font-sans antialiased;
+  }
+}
+
+.lab-border {
+  @apply border border-neutral-200;
+}
+
+.lab-card {
+  @apply bg-white border border-neutral-200/60 shadow-sm rounded-sm;
+}
+
+/* Markdown styling */
+.prose ul {
+  @apply list-none p-0 m-0;
+}
+
+.prose li {
+  @apply flex gap-3 items-start mb-3 last:mb-0;
+}
+
+.prose li::before {
+  content: "•";
+  @apply text-neutral-400 font-bold shrink-0;
+}
+
+.prose ol {
+  @apply list-decimal pl-5 mb-4;
+}
+
+.prose p {
+  @apply mb-3 last:mb-0 leading-relaxed;
+}
+
+.prose-invert-white p, .prose-invert-white li {
+  @apply text-white/90;
+}
+
+.prose-invert-white li::before {
+  @apply text-white/40;
+}
