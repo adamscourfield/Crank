@@ -22,24 +22,28 @@
 
 /* Markdown styling */
 .prose ul {
-  @apply list-none p-0 m-0;
+  @apply list-none p-0 m-0 space-y-2;
 }
 
 .prose li {
-  @apply flex gap-3 items-start mb-3 last:mb-0;
+  @apply flex gap-3 items-start;
 }
 
 .prose li::before {
-  content: "•";
-  @apply text-neutral-400 font-bold shrink-0;
+  content: "—";
+  @apply text-neutral-300 font-bold shrink-0 mt-[1px];
 }
 
 .prose ol {
-  @apply list-decimal pl-5 mb-4;
+  @apply list-decimal pl-5 space-y-2;
 }
 
 .prose p {
-  @apply mb-3 last:mb-0 leading-relaxed;
+  @apply leading-relaxed;
+}
+
+.prose strong {
+  @apply font-bold text-neutral-900;
 }
 
 .prose-invert-white p, .prose-invert-white li {
@@ -47,5 +51,34 @@
 }
 
 .prose-invert-white li::before {
-  @apply text-white/40;
+  @apply text-white/30;
+}
+
+.prose-invert-white strong {
+  @apply text-white;
+}
+
+.lab-response-marker {
+  @apply text-[9px] font-mono font-bold tracking-[0.2em] text-neutral-300 uppercase mb-3 flex items-center gap-2;
+}
+
+.lab-response-marker::after {
+  content: "";
+  @apply h-[1px] flex-1 bg-neutral-100;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-neutral-200 rounded-full;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  @apply bg-neutral-300;
 }
