@@ -1,14 +1,15 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Space Mono", monospace;
+  --font-logo: "Space Mono", monospace;
 }
 
 @layer base {
   body {
-    @apply bg-[#fafafa] text-[#1a1a1a] font-sans antialiased;
+    @apply bg-white text-neutral-900 font-sans antialiased;
   }
 }
 
@@ -21,37 +22,62 @@
 }
 
 /* Markdown styling */
-.prose ul {
-  @apply list-none p-0 m-0 space-y-2;
-}
-
-.prose li {
-  @apply flex gap-3 items-start;
-}
-
-.prose li::before {
-  content: "—";
-  @apply text-neutral-300 font-bold shrink-0 mt-[1px];
-}
-
-.prose ol {
-  @apply list-decimal pl-5 space-y-2;
+.prose {
+  @apply text-neutral-600 max-w-none;
 }
 
 .prose p {
-  @apply leading-relaxed;
+  @apply leading-relaxed mb-6;
+}
+
+.prose ul {
+  @apply list-none p-0 m-0 mb-8 space-y-5;
+}
+
+.prose li {
+  @apply leading-relaxed pl-0 mb-4 list-decimal marker:text-neutral-300 marker:font-bold;
+}
+
+.prose ul li {
+  @apply list-none relative pl-6;
+}
+
+.prose ul li::before {
+  content: "—";
+  @apply absolute left-0 text-neutral-200 font-medium;
+}
+
+.prose li strong:first-child {
+  @apply text-neutral-900 font-bold uppercase tracking-tight text-[13px];
 }
 
 .prose strong {
-  @apply font-bold text-neutral-900;
+  @apply font-bold text-neutral-900 tracking-tight transition-colors;
+}
+
+.prose h1, .prose h2, .prose h3 {
+  @apply font-extrabold text-neutral-900 mt-10 mb-6 tracking-tight text-lg uppercase;
+}
+
+/* Table support */
+.prose table {
+  @apply w-full border-collapse mb-8 text-[13px] border border-neutral-100;
+}
+
+.prose th {
+  @apply bg-neutral-50 border-b border-neutral-200 p-3 text-left font-black uppercase tracking-widest text-[9px] text-neutral-400;
+}
+
+.prose td {
+  @apply border-b border-neutral-50 p-3 text-neutral-600 font-medium;
+}
+
+.prose tr:last-child td {
+  @apply border-b-0;
 }
 
 .prose-invert-white p, .prose-invert-white li {
   @apply text-white/90;
-}
-
-.prose-invert-white li::before {
-  @apply text-white/30;
 }
 
 .prose-invert-white strong {
@@ -59,12 +85,12 @@
 }
 
 .lab-response-marker {
-  @apply text-[9px] font-mono font-bold tracking-[0.2em] text-neutral-300 uppercase mb-3 flex items-center gap-2;
+  @apply text-[9px] font-mono font-black tracking-[0.25em] text-neutral-400 uppercase flex items-center w-full;
 }
 
 .lab-response-marker::after {
   content: "";
-  @apply h-[1px] flex-1 bg-neutral-100;
+  @apply h-[1px] flex-1 bg-neutral-100 ml-4;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
