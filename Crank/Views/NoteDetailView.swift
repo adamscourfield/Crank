@@ -155,9 +155,13 @@ struct NoteDetailView: View {
                                 deleteImage(image)
                             } label: {
                                 Image(systemName: "xmark.circle.fill")
-                                    .foregroundStyle(.white, .black.opacity(0.6))
+                                    .font(.system(size: 22))
+                                    .foregroundStyle(.white, .black.opacity(0.65))
+                                    .frame(width: 36, height: 36)
+                                    .contentShape(Circle())
                             }
-                            .padding(5)
+                            .buttonStyle(.plain)
+                            .offset(x: 8, y: -8)
                         }
                 }
             }
