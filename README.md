@@ -1,9 +1,10 @@
 # CRANK
 
-A personal, local-only notes app for iPhone: notes with titles, free text,
-checklists, and photo attachments — locked behind Face ID, styled
-monochrome with coral accents. No accounts, no sync, no third party,
-nobody else's eyes on it but yours.
+A personal, local-only project and notes app for iPhone: projects contain
+tick-box notes, pinned notes surface on the home screen, and notes can hold
+photos and documents (including from Google Drive) — all locked behind
+Face ID, styled monochrome with coral accents. No accounts, no sync, no
+third party, nobody else's eyes on it but yours.
 
 This repo contains Swift source files only, not an `.xcodeproj`. Xcode's
 own "New Project" wizard generates a more reliable project file than a
@@ -15,6 +16,8 @@ these files in. Takes about 5 minutes.
 - A Mac with Xcode 15 or later (free from the Mac App Store)
 - An iPhone with Face ID, running iOS 17 or later
 - A free Apple ID (no paid developer account needed) — see signing note below
+- Optionally, the Google Drive app installed on the iPhone if you want
+  Drive files to show up as an attachment source (see below)
 
 ## Setup
 
@@ -37,15 +40,16 @@ these files in. Takes about 5 minutes.
 4. **Add the accent color.** Drag `Crank/Resources/AccentColor.colorset`
    into your project's `Assets.xcassets` in Xcode's navigator (it'll
    offer to replace the template's blank `AccentColor` — let it). This is
-   what makes buttons, the Face ID progress ring, and pins all pick up the
-   coral tint automatically.
+   what makes buttons, pins, checked notes, and the Face ID progress ring
+   all pick up the coral tint automatically.
 
-5. **Enable Face ID.** Select the `Crank` target → Info tab → add a row:
+5. **Add two privacy usage descriptions.** Select the `Crank` target →
+   Info tab → add these rows. **Both are required** — the app crashes at
+   the moment it tries to use Face ID or the camera without them:
    - Key: `Privacy - Face ID Usage Description` (`NSFaceIDUsageDescription`)
-   - Value: `Crank uses Face ID to keep your notes private.`
-
-   **This step is required** — the app will crash on launch without it
-   the moment it tries to use Face ID.
+     Value: `Crank uses Face ID to keep your notes private.`
+   - Key: `Privacy - Camera Usage Description` (`NSCameraUsageDescription`)
+     Value: `Crank uses the camera to attach photos to your notes.`
 
 6. **Set the deployment target.** Target → General → Minimum Deployments
    → iOS 17.0 (required for SwiftData).
@@ -66,48 +70,72 @@ these files in. Takes about 5 minutes.
   wordmark, Face ID triggers automatically on launch. Fails gracefully —
   if Face ID isn't set up on the device (e.g. an older iPhone or a
   Simulator without biometrics configured), it shows a "Continue" button
-  instead of locking you out entirely.
-- **Notes list** with search, pin-to-top, swipe-to-delete, and swipe-to-pin.
-- **Note editor**: title, free-text body, a checklist section (add, check
-  off, swipe to delete items), and a photo grid.
-- **Photos**: pick any number from your library via the system picker
-  (no extra permission prompt needed — `PhotosPicker` runs
-  out-of-process). Tap a thumbnail to view full-screen; tap the X to
-  remove it.
-- Empty notes (no title, body, checklist, or photos) are discarded
+  instead of locking you out entirely. Checked once at launch, not on
+  every return to the foreground — easy to tighten later if you want that.
+- **Home screen**: any pinned notes appear first, above your list of
+  projects. Each project row shows how many notes in it are still active.
+- **Projects**: the top-level container. Create as many as you like; each
+  holds its own notes.
+- **Notes are the tick-box**: every note has a checkbox. Ticking it marks
+  it complete *and* archives it in one step — there's no separate
+  "done" vs "archived" state to think about. Each project has an Archive
+  screen for anything you've ticked off, with a swipe action to restore a
+  note if you ticked it by mistake.
+- **Pinning**: any note can be pinned, independent of its project —
+  pinned, non-archived notes are what shows up on the home screen.
+- Created and completed dates are recorded and shown on the note, but
+  purely as information — nothing in the app treats them as a deadline.
+- **Photos**: attach from your library (`PhotosPicker`, no extra
+  permission prompt) or take one directly in the app with the camera
+  button. Thumbnails get a rounded corner, a hairline border, and a soft
+  shadow so they read as deliberate, not slapped-on; tap one to view it
+  full-screen.
+- **Documents**: tap "Add Document" to open the system file browser, which
+  lists iCloud Drive, On My iPhone, and — if you have the Google Drive app
+  installed — your Drive files too, since Drive registers itself as a
+  Files provider. Whatever you pick is copied into the note (same as
+  photos), so the note stays self-contained even if the original file
+  later moves. Tap a document to preview it with QuickLook.
+- Empty notes (no title, body, photos, or documents) are discarded
   automatically when you leave the editor.
 - **Design**: monochrome throughout (system backgrounds/text, which
-  already adapt to light/dark), with a single coral accent color for
-  anything interactive or "on" — pins, the checked state of a checklist
-  item, buttons, the Face ID progress ring.
+  already adapt to light/dark), with a single coral accent for anything
+  interactive or "on" — pins, ticked notes, buttons, the Face ID ring.
 
 ## What it deliberately doesn't do
 
-- No iCloud sync — notes live only on this one phone.
+- No iCloud sync — everything lives only on this one phone.
 - No sharing, collaboration, or export — single-user by design.
-- No camera capture (only picking existing photos), to avoid needing an
-  extra `NSCameraUsageDescription` entry — easy to add later if wanted.
-- Face ID is only checked once at launch, not every time the app returns
-  to the foreground — straightforward to extend if you want it stricter.
+- No live connection to Google Drive — picking a Drive file copies it in
+  once; the note won't reflect later edits made to the original in Drive.
+- No renaming a project after creation, and no reordering projects —
+  straightforward to add if you find you want it.
 
 ## File layout
 
 ```
 Crank/
-  CrankApp.swift             — app entry point, Face ID gate, SwiftData container
+  CrankApp.swift                 — app entry point, Face ID gate, SwiftData container
   Theme/
-    Color+Crank.swift         — the one accent color token (Color.coral)
+    Color+Crank.swift             — the one accent color token (Color.coral)
   Models/
-    Note.swift                 — note entity (title, body, timestamps, pin)
-    ChecklistItem.swift         — one checklist row, belongs to a Note
-    NoteImage.swift              — one attached photo, belongs to a Note
+    Project.swift                  — top-level container; holds notes
+    Note.swift                      — the tick-box note: title, body, pin, archive state, dates
+    NoteImage.swift                  — one attached photo, belongs to a Note
+    NoteDocument.swift                 — one attached document, belongs to a Note
   Views/
-    LockScreenView.swift        — animated Face ID entry screen
-    NoteListView.swift           — the list screen
-    NoteRowView.swift             — one row in the list
-    NoteDetailView.swift           — the note editor
-    ChecklistSectionView.swift      — checklist UI inside the editor
-    ImageViewerView.swift            — full-screen photo viewer
+    LockScreenView.swift            — animated Face ID entry screen
+    HomeView.swift                   — pinned notes + project list
+    ProjectRowView.swift              — one row on the home screen
+    PinnedNoteRow.swift                — one pinned-note row on the home screen
+    ProjectDetailView.swift             — active notes inside a project
+    ArchiveView.swift                    — completed notes for a project
+    NoteRowView.swift                     — one row inside a project (tick box + thumbnail)
+    NoteDetailView.swift                   — the note editor
+    DocumentRowView.swift                   — one attached-document row
+    DocumentPreviewView.swift                — QuickLook wrapper for documents
+    CameraCaptureView.swift                   — UIImagePickerController wrapper for the camera
+    ImageViewerView.swift                      — full-screen photo viewer
   Resources/
-    AccentColor.colorset/             — the coral accent, light + dark variants
+    AccentColor.colorset/                       — the coral accent, light + dark variants
 ```

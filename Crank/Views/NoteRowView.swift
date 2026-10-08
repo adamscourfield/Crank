@@ -2,26 +2,33 @@ import SwiftUI
 
 struct NoteRowView: View {
     @Bindable var note: Note
-
-    private var checklistSummary: String? {
-        guard !note.checklistItems.isEmpty else { return nil }
-        let done = note.checklistItems.filter(\.isDone).count
-        return "\(done)/\(note.checklistItems.count) checked"
-    }
+    var onToggle: () -> Void
 
     private var thumbnail: UIImage? {
-        guard let first = note.images.sorted(by: { $0.sortOrder < $1.sortOrder }).first else { return nil }
+        guard let first = note.sortedImages.first else { return nil }
         return UIImage(data: first.data)
     }
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
+            Button(action: onToggle) {
+                Image(systemName: note.isDone ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 22))
+                    .foregroundStyle(note.isDone ? Color.coral : Color.secondary)
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 2)
+
             if let thumbnail {
                 Image(uiImage: thumbnail)
                     .resizable()
                     .scaledToFill()
-                    .frame(width: 48, height: 48)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .frame(width: 44, height: 44)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+                    )
             }
 
             VStack(alignment: .leading, spacing: 4) {
@@ -32,7 +39,7 @@ struct NoteRowView: View {
                             .foregroundStyle(Color.coral)
                     }
                     Text(note.title.isEmpty ? "Untitled" : note.title)
-                        .font(.headline)
+                        .font(.body.weight(.medium))
                         .lineLimit(1)
                 }
                 if !note.body.isEmpty {
@@ -41,15 +48,15 @@ struct NoteRowView: View {
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
                 }
-                HStack(spacing: 8) {
-                    Text(note.updatedAt.formatted(date: .abbreviated, time: .shortened))
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                    if let checklistSummary {
-                        Text("· \(checklistSummary)")
+                HStack(spacing: 10) {
+                    if !note.documents.isEmpty {
+                        Label("\(note.documents.count)", systemImage: "paperclip")
                             .font(.caption2)
                             .foregroundStyle(.tertiary)
                     }
+                    Text(note.createdAt.formatted(date: .abbreviated, time: .omitted))
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
                 }
             }
         }

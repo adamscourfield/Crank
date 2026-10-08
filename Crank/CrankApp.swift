@@ -6,7 +6,7 @@ struct CrankApp: App {
     @State private var isUnlocked = false
 
     var sharedModelContainer: ModelContainer = {
-        let schema = Schema([Note.self, ChecklistItem.self, NoteImage.self])
+        let schema = Schema([Project.self, Note.self, NoteImage.self, NoteDocument.self])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
@@ -19,7 +19,7 @@ struct CrankApp: App {
         WindowGroup {
             Group {
                 if isUnlocked {
-                    NoteListView()
+                    HomeView()
                         .transition(.opacity.combined(with: .scale(scale: 1.02)))
                 } else {
                     LockScreenView {

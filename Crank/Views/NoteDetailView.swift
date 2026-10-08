@@ -1,6 +1,8 @@
 import SwiftUI
 import SwiftData
 import PhotosUI
+import UniformTypeIdentifiers
+import UIKit
 
 struct NoteDetailView: View {
     @Bindable var note: Note
@@ -9,6 +11,9 @@ struct NoteDetailView: View {
 
     @State private var selectedPhotoItems: [PhotosPickerItem] = []
     @State private var fullScreenImage: NoteImage?
+    @State private var showingCamera = false
+    @State private var showingDocumentImporter = false
+    @State private var previewURL: URL?
 
     var body: some View {
         NavigationStack {
@@ -16,29 +21,78 @@ struct NoteDetailView: View {
                 Section {
                     TextField("Title", text: $note.title)
                         .font(.title3.bold())
+                        .fontDesign(.rounded)
                     TextField("Note", text: $note.body, axis: .vertical)
                         .lineLimit(5...20)
                 }
 
-                Section("Checklist") {
-                    ChecklistSectionView(note: note)
-                }
-
-                Section("Images") {
-                    imageGrid
-                    PhotosPicker(selection: $selectedPhotoItems, matching: .images) {
-                        Label("Add Photos", systemImage: "photo.on.rectangle.angled")
+                Section {
+                    Button(action: toggleComplete) {
+                        HStack {
+                            Image(systemName: note.isDone ? "checkmark.circle.fill" : "circle")
+                                .foregroundStyle(note.isDone ? Color.coral : Color.secondary)
+                            Text(note.isDone ? "Completed" : "Mark Complete")
+                                .foregroundStyle(.primary)
+                            Spacer()
+                        }
+                    }
+                    Button {
+                        note.isPinned.toggle()
+                    } label: {
+                        HStack {
+                            Image(systemName: note.isPinned ? "pin.fill" : "pin")
+                                .foregroundStyle(note.isPinned ? Color.coral : Color.secondary)
+                            Text(note.isPinned ? "Pinned" : "Pin to Home")
+                                .foregroundStyle(.primary)
+                            Spacer()
+                        }
                     }
                 }
+
+                Section("Photos") {
+                    imageGrid
+                    HStack {
+                        PhotosPicker(selection: $selectedPhotoItems, matching: .images) {
+                            Label("Library", systemImage: "photo.on.rectangle.angled")
+                        }
+                        Spacer()
+                        Button {
+                            showingCamera = true
+                        } label: {
+                            Label("Camera", systemImage: "camera.fill")
+                        }
+                    }
+                }
+
+                Section("Documents") {
+                    ForEach(note.sortedDocuments) { document in
+                        DocumentRowView(document: document)
+                            .contentShape(Rectangle())
+                            .onTapGesture { previewURL = document.writeToTemporaryURL() }
+                    }
+                    .onDelete(perform: deleteDocuments)
+
+                    Button {
+                        showingDocumentImporter = true
+                    } label: {
+                        Label("Add Document", systemImage: "doc.badge.plus")
+                    }
+                }
+
+                Section {
+                    LabeledContent("Created", value: note.createdAt.formatted(date: .abbreviated, time: .shortened))
+                    if let completedAt = note.completedAt {
+                        LabeledContent("Completed", value: completedAt.formatted(date: .abbreviated, time: .shortened))
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
-            .navigationTitle("Edit Note")
+            .navigationTitle("Note")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
-                        note.updatedAt = .now
-                        dismiss()
-                    }
+                    Button("Done") { dismiss() }
                 }
             }
             .onChange(of: selectedPhotoItems) { _, newItems in
@@ -47,19 +101,46 @@ struct NoteDetailView: View {
             .fullScreenCover(item: $fullScreenImage) { image in
                 ImageViewerView(noteImage: image)
             }
+            .fullScreenCover(isPresented: $showingCamera) {
+                CameraCaptureView(
+                    onCapture: { image in
+                        addCapturedImage(image)
+                        showingCamera = false
+                    },
+                    onCancel: { showingCamera = false }
+                )
+                .ignoresSafeArea()
+            }
+            .fileImporter(isPresented: $showingDocumentImporter, allowedContentTypes: [.item], allowsMultipleSelection: true) { result in
+                handleDocumentImport(result)
+            }
+            .sheet(isPresented: isShowingPreview) {
+                if let previewURL {
+                    DocumentPreviewView(url: previewURL)
+                }
+            }
         }
     }
 
+    private var isShowingPreview: Binding<Bool> {
+        Binding(get: { previewURL != nil }, set: { if !$0 { previewURL = nil } })
+    }
+
     private var imageGrid: some View {
-        let columns = [GridItem(.adaptive(minimum: 80, maximum: 100), spacing: 8)]
-        return LazyVGrid(columns: columns, spacing: 8) {
-            ForEach(note.images.sorted(by: { $0.sortOrder < $1.sortOrder })) { image in
+        let columns = [GridItem(.adaptive(minimum: 84, maximum: 104), spacing: 10)]
+        return LazyVGrid(columns: columns, spacing: 10) {
+            ForEach(note.sortedImages) { image in
                 if let uiImage = UIImage(data: image.data) {
                     Image(uiImage: uiImage)
                         .resizable()
                         .scaledToFill()
-                        .frame(width: 80, height: 80)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .frame(width: 88, height: 88)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+                        )
+                        .shadow(color: .black.opacity(0.12), radius: 6, x: 0, y: 3)
                         .onTapGesture { fullScreenImage = image }
                         .overlay(alignment: .topTrailing) {
                             Button {
@@ -68,12 +149,19 @@ struct NoteDetailView: View {
                                 Image(systemName: "xmark.circle.fill")
                                     .foregroundStyle(.white, .black.opacity(0.6))
                             }
-                            .padding(4)
+                            .padding(5)
                         }
                 }
             }
         }
         .padding(.vertical, 4)
+    }
+
+    private func toggleComplete() {
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+            note.toggleComplete()
+        }
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
 
     private func addImages(from items: [PhotosPickerItem]) async {
@@ -90,8 +178,53 @@ struct NoteDetailView: View {
         selectedPhotoItems = []
     }
 
+    private func addCapturedImage(_ uiImage: UIImage) {
+        guard let data = uiImage.jpegData(compressionQuality: 0.9) else { return }
+        let nextOrder = (note.images.map(\.sortOrder).max() ?? -1) + 1
+        let image = NoteImage(data: data, sortOrder: nextOrder)
+        image.note = note
+        modelContext.insert(image)
+        note.images.append(image)
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+    }
+
     private func deleteImage(_ image: NoteImage) {
         note.images.removeAll { $0.persistentModelID == image.persistentModelID }
         modelContext.delete(image)
+    }
+
+    /// `.item` lets the system "Browse" picker surface every installed Files
+    /// provider — iCloud Drive, On My iPhone, and Google Drive if its app is
+    /// installed — without this app talking to any cloud API directly. The
+    /// file's bytes are copied in, same as photos, so the note stays
+    /// self-contained even if the original Drive file later moves or is
+    /// deleted.
+    private func handleDocumentImport(_ result: Result<[URL], Error>) {
+        guard case .success(let urls) = result else { return }
+        var nextOrder = (note.documents.map(\.sortOrder).max() ?? -1) + 1
+        for url in urls {
+            let didAccess = url.startAccessingSecurityScopedResource()
+            defer { if didAccess { url.stopAccessingSecurityScopedResource() } }
+            guard let data = try? Data(contentsOf: url) else { continue }
+            let document = NoteDocument(
+                data: data,
+                fileName: url.deletingPathExtension().lastPathComponent,
+                fileExtension: url.pathExtension,
+                sortOrder: nextOrder
+            )
+            document.note = note
+            modelContext.insert(document)
+            note.documents.append(document)
+            nextOrder += 1
+        }
+    }
+
+    private func deleteDocuments(at offsets: IndexSet) {
+        let documents = note.sortedDocuments
+        for index in offsets {
+            let document = documents[index]
+            note.documents.removeAll { $0.persistentModelID == document.persistentModelID }
+            modelContext.delete(document)
+        }
     }
 }
