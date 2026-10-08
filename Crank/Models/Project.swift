@@ -4,13 +4,15 @@ import SwiftData
 @Model
 final class Project {
     var name: String
+    var icon: String
     var createdAt: Date
 
     @Relationship(deleteRule: .cascade, inverse: \Note.project)
     var notes: [Note] = []
 
-    init(name: String = "") {
+    init(name: String = "", icon: String = "folder") {
         self.name = name
+        self.icon = icon
         self.createdAt = .now
     }
 

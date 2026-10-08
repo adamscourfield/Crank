@@ -7,13 +7,16 @@ struct ProjectRowView: View {
 
     var body: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(project.name.isEmpty ? "Untitled Project" : project.name)
-                    .font(.headline)
-                    .fontDesign(.rounded)
-                Text(activeCount == 0 ? "All done" : "\(activeCount) active")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            HStack(spacing: 12) {
+                ProjectIconView(systemName: project.icon)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(project.name.isEmpty ? "Untitled Project" : project.name)
+                        .font(.headline)
+                        .fontDesign(.rounded)
+                    Text(activeCount == 0 ? "All done" : "\(activeCount) active")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
 
             Spacer()

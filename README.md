@@ -66,21 +66,32 @@ these files in. Takes about 5 minutes.
 
 ## What it does
 
-- **Face ID entry screen**: animated coral pulse rings behind the CRANK
-  wordmark, Face ID triggers automatically on launch. Fails gracefully —
-  if Face ID isn't set up on the device (e.g. an older iPhone or a
-  Simulator without biometrics configured), it shows a "Continue" button
-  instead of locking you out entirely. Checked once at launch, not on
-  every return to the foreground — easy to tighten later if you want that.
+- **Entry screen**: "CRANK" builds in letter by letter with a coral
+  underline draw-in (a brief ident, like a production company bumper),
+  then crossfades into the Face ID challenge — coral pulse rings behind
+  the wordmark, Face ID triggers automatically. Fails gracefully — if
+  Face ID isn't set up on the device (e.g. an older iPhone or a Simulator
+  without biometrics configured), it shows a "Continue" button instead of
+  locking you out entirely, and a "Replay Intro" link re-runs the ident if
+  you want to see it again. Checked once at launch, not on every return to
+  the foreground — easy to tighten later if you want that.
 - **Home screen**: any pinned notes appear first, above your list of
-  projects. Each project row shows how many notes in it are still active.
-- **Projects**: the top-level container. Create as many as you like; each
-  holds its own notes.
-- **Notes are the tick-box**: every note has a checkbox. Ticking it marks
-  it complete *and* archives it in one step — there's no separate
-  "done" vs "archived" state to think about. Each project has an Archive
-  screen for anything you've ticked off, with a swipe action to restore a
-  note if you ticked it by mistake.
+  projects, both searchable (`Search notes and projects`). Each project
+  row shows how many notes in it are still active, plus a small icon
+  chip you choose when creating it. Pinned notes are capped at 4 by
+  default with a "+N more pinned" expander, so a growing pinned list
+  doesn't take over the home screen — search bypasses the cap and shows
+  every match.
+- **Projects**: the top-level container. Create as many as you like,
+  each with a name and an icon picked from a small curated set (folder,
+  briefcase, wrench, house, sun, and a few others); every row and header
+  that shows the project reuses that same icon chip.
+- **Notes are the tick-box**: every note has a checkbox. Ticking it plays
+  a brief fill-and-collapse (not an instant vanish) before it archives —
+  there's no separate "done" vs "archived" state to think about once
+  that finishes. Each project has an Archive screen for anything you've
+  ticked off, with a swipe action to restore a note if you ticked it by
+  mistake. A project's note list is also searchable once it grows.
 - **Pinning**: any note can be pinned, independent of its project —
   pinned, non-archived notes are what shows up on the home screen.
 - Created and completed dates are recorded and shown on the note, but
@@ -110,6 +121,10 @@ these files in. Takes about 5 minutes.
   once; the note won't reflect later edits made to the original in Drive.
 - No renaming a project after creation, and no reordering projects —
   straightforward to add if you find you want it.
+- No syncing Crank between devices (e.g. an iPhone and a Mac build) —
+  that would mean either CloudKit (which needs a paid Apple Developer
+  account) or building a real local-network sync protocol ourselves;
+  deliberately out of scope for a personal, single-device app.
 
 ## File layout
 
@@ -119,23 +134,25 @@ Crank/
   Theme/
     Color+Crank.swift             — the one accent color token (Color.coral)
   Models/
-    Project.swift                  — top-level container; holds notes
+    Project.swift                  — top-level container; name, icon, holds notes
     Note.swift                      — the tick-box note: title, body, pin, archive state, dates
     NoteImage.swift                  — one attached photo, belongs to a Note
     NoteDocument.swift                 — one attached document, belongs to a Note
   Views/
-    LockScreenView.swift            — animated Face ID entry screen
-    HomeView.swift                   — pinned notes + project list
+    LockScreenView.swift            — ident reveal + animated Face ID entry screen
+    HomeView.swift                   — pinned notes (capped) + searchable project list
     ProjectRowView.swift              — one row on the home screen
-    PinnedNoteRow.swift                — one pinned-note row on the home screen
-    ProjectDetailView.swift             — active notes inside a project
-    ArchiveView.swift                    — completed notes for a project
-    NoteRowView.swift                     — one row inside a project (tick box + thumbnail)
-    NoteDetailView.swift                   — the note editor
-    DocumentRowView.swift                   — one attached-document row
-    DocumentPreviewView.swift                — QuickLook wrapper for documents
-    CameraCaptureView.swift                   — UIImagePickerController wrapper for the camera
-    ImageViewerView.swift                      — full-screen photo viewer
+    ProjectIconView.swift              — the coral icon chip, and the curated icon set
+    NewProjectView.swift                — name + icon picker sheet for creating a project
+    PinnedNoteRow.swift                   — one pinned-note row on the home screen
+    ProjectDetailView.swift                — active notes inside a project, searchable
+    ArchiveView.swift                       — completed notes for a project
+    NoteRowView.swift                        — one row inside a project (tick box + thumbnail)
+    NoteDetailView.swift                      — the note editor
+    DocumentRowView.swift                      — one attached-document row
+    DocumentPreviewView.swift                   — QuickLook wrapper for documents
+    CameraCaptureView.swift                      — UIImagePickerController wrapper for the camera
+    ImageViewerView.swift                         — full-screen photo viewer
   Resources/
     AccentColor.colorset/                       — the coral accent, light + dark variants
 ```

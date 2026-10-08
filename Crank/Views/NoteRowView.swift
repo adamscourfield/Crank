@@ -2,6 +2,7 @@ import SwiftUI
 
 struct NoteRowView: View {
     @Bindable var note: Note
+    var isCompleting: Bool = false
     var onToggle: () -> Void
 
     private var thumbnail: UIImage? {
@@ -12,11 +13,12 @@ struct NoteRowView: View {
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             Button(action: onToggle) {
-                Image(systemName: note.isDone ? "checkmark.circle.fill" : "circle")
+                Image(systemName: isCompleting ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 22))
-                    .foregroundStyle(note.isDone ? Color.coral : Color.secondary)
+                    .foregroundStyle(isCompleting ? Color.coral : Color.secondary)
             }
             .buttonStyle(.plain)
+            .disabled(isCompleting)
             .padding(.top, 2)
 
             if let thumbnail {
