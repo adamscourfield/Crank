@@ -70,7 +70,9 @@ struct ProjectDetailView: View {
             }
         }
         .sheet(item: $noteToEdit, onDismiss: pruneEmptyNotes) { note in
-            NoteDetailView(note: note)
+            NavigationStack {
+                NoteDetailView(note: note)
+            }
         }
     }
 

@@ -35,7 +35,9 @@ struct ArchiveView: View {
         .navigationTitle("Archive")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $noteToView) { note in
-            NoteDetailView(note: note)
+            NavigationStack {
+                NoteDetailView(note: note)
+            }
         }
     }
 

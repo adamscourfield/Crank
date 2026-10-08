@@ -16,8 +16,7 @@ struct NoteDetailView: View {
     @State private var previewURL: URL?
 
     var body: some View {
-        NavigationStack {
-            Form {
+        Form {
                 Section {
                     TextField("Title", text: $note.title)
                         .font(.title3.bold())
@@ -119,7 +118,6 @@ struct NoteDetailView: View {
                     DocumentPreviewView(url: previewURL)
                 }
             }
-        }
     }
 
     private var isShowingPreview: Binding<Bool> {
