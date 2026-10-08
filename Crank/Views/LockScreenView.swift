@@ -31,6 +31,7 @@ struct LockScreenView: View {
     @State private var enteredDigits: [Int] = []
     @State private var showError = false
     @State private var shakeOffset: CGFloat = 0
+    @State private var pressedKey: String?
 
     var body: some View {
         ZStack {
@@ -112,27 +113,44 @@ struct LockScreenView: View {
 
     @ViewBuilder
     private func keypadButton(_ key: String) -> some View {
+        let isPressed = pressedKey == key
+
         if key.isEmpty {
             Color.clear.frame(width: 68, height: 68)
         } else if key == "⌫" {
-            Button(action: deleteDigit) {
+            Button(action: { flash(key); deleteDigit() }) {
                 Image(systemName: "delete.left")
                     .font(.system(size: 20, weight: .medium))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(isPressed ? .white : Color.primary)
                     .frame(width: 68, height: 68)
+                    .background(isPressed ? Color.coral : Color(.secondarySystemBackground), in: Circle())
             }
-            .buttonStyle(PressableButtonStyle())
+            .buttonStyle(.plain)
+            .scaleEffect(isPressed ? 0.88 : 1)
+            .animation(.easeOut(duration: 0.1), value: isPressed)
         } else {
-            Button {
-                tapDigit(Int(key)!)
-            } label: {
+            Button(action: { flash(key); tapDigit(Int(key)!) }) {
                 Text(key)
                     .font(.system(size: 26, weight: .medium, design: .rounded))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(isPressed ? .white : Color.primary)
                     .frame(width: 68, height: 68)
-                    .background(Color(.secondarySystemBackground), in: Circle())
+                    .background(isPressed ? Color.coral : Color(.secondarySystemBackground), in: Circle())
             }
-            .buttonStyle(PressableButtonStyle())
+            .buttonStyle(.plain)
+            .scaleEffect(isPressed ? 0.88 : 1)
+            .animation(.easeOut(duration: 0.1), value: isPressed)
+        }
+    }
+
+    /// Driven by an explicit timer rather than the button's raw press/release
+    /// events, so a fast tap still shows a clearly visible flash instead of
+    /// a highlight that comes and goes faster than the eye can register.
+    private func flash(_ key: String) {
+        pressedKey = key
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+            if pressedKey == key {
+                pressedKey = nil
+            }
         }
     }
 
@@ -200,13 +218,5 @@ struct LockScreenView: View {
                 }
             }
         }
-    }
-}
-
-private struct PressableButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.92 : 1)
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }
