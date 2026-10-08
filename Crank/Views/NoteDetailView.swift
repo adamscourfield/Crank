@@ -14,6 +14,7 @@ struct NoteDetailView: View {
     @State private var showingCamera = false
     @State private var showingDocumentImporter = false
     @State private var previewURL: URL?
+    @State private var showingCameraUnavailableAlert = false
 
     var body: some View {
         Form {
@@ -56,7 +57,11 @@ struct NoteDetailView: View {
                         }
                         Spacer()
                         Button {
-                            showingCamera = true
+                            if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                                showingCamera = true
+                            } else {
+                                showingCameraUnavailableAlert = true
+                            }
                         } label: {
                             Label("Camera", systemImage: "camera.fill")
                         }
@@ -112,6 +117,11 @@ struct NoteDetailView: View {
             }
             .fileImporter(isPresented: $showingDocumentImporter, allowedContentTypes: [.item], allowsMultipleSelection: true) { result in
                 handleDocumentImport(result)
+            }
+            .alert("Camera Unavailable", isPresented: $showingCameraUnavailableAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("This device doesn't have a camera available.")
             }
             .sheet(isPresented: isShowingPreview) {
                 if let previewURL {
