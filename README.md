@@ -3,8 +3,8 @@
 A personal, local-only project and notes app for iPhone: projects contain
 tick-box notes, pinned notes surface on the home screen, and notes can hold
 photos and documents (including from Google Drive) — all locked behind
-Face ID, styled monochrome with coral accents. No accounts, no sync, no
-third party, nobody else's eyes on it but yours.
+a 4-digit passcode, styled monochrome with coral accents. No accounts, no
+sync, no third party, nobody else's eyes on it but yours.
 
 This repo contains Swift source files only, not an `.xcodeproj`. Xcode's
 own "New Project" wizard generates a more reliable project file than a
@@ -14,7 +14,7 @@ these files in. Takes about 5 minutes.
 ## Requirements
 
 - A Mac with Xcode 15 or later (free from the Mac App Store)
-- An iPhone with Face ID, running iOS 17 or later
+- An iPhone running iOS 17 or later
 - A free Apple ID (no paid developer account needed) — see signing note below
 - Optionally, the Google Drive app installed on the iPhone if you want
   Drive files to show up as an attachment source (see below)
@@ -40,14 +40,12 @@ these files in. Takes about 5 minutes.
 4. **Add the accent color.** Drag `Crank/Resources/AccentColor.colorset`
    into your project's `Assets.xcassets` in Xcode's navigator (it'll
    offer to replace the template's blank `AccentColor` — let it). This is
-   what makes buttons, pins, checked notes, and the Face ID progress ring
-   all pick up the coral tint automatically.
+   what makes buttons, pins, checked notes, and the passcode dots all
+   pick up the coral tint automatically.
 
-5. **Add two privacy usage descriptions.** Select the `Crank` target →
-   Info tab → add these rows. **Both are required** — the app crashes at
-   the moment it tries to use Face ID or the camera without them:
-   - Key: `Privacy - Face ID Usage Description` (`NSFaceIDUsageDescription`)
-     Value: `Crank uses Face ID to keep your notes private.`
+5. **Add a privacy usage description for the camera.** Select the `Crank`
+   target → Info tab → add this row. **It's required** — the app crashes
+   the moment it tries to use the camera without it:
    - Key: `Privacy - Camera Usage Description` (`NSCameraUsageDescription`)
      Value: `Crank uses the camera to attach photos to your notes.`
 
@@ -68,13 +66,14 @@ these files in. Takes about 5 minutes.
 
 - **Entry screen**: "CRANK" builds in letter by letter with a coral
   underline draw-in (a brief ident, like a production company bumper),
-  then crossfades into the Face ID challenge — coral pulse rings behind
-  the wordmark, Face ID triggers automatically. Fails gracefully — if
-  Face ID isn't set up on the device (e.g. an older iPhone or a Simulator
-  without biometrics configured), it shows a "Continue" button instead of
-  locking you out entirely, and a "Replay Intro" link re-runs the ident if
-  you want to see it again. Checked once at launch, not on every return to
-  the foreground — easy to tighten later if you want that.
+  then crossfades into a 4-digit passcode screen — dot indicators and a
+  numeric keypad, matching the rest of the app's design rather than
+  using the system's own passcode UI. The correct code is `2501`,
+  hardcoded as a single constant at the top of `LockScreenView.swift`
+  (there's no settings screen to change it from — edit that constant
+  directly if you want a different one). A wrong code shakes the dots
+  and clears; checked once at launch, not on every return to the
+  foreground — easy to tighten later if you want that.
 - **Home screen**: any pinned notes appear first, above your list of
   projects, both searchable (`Search notes and projects`). Each project
   row shows how many notes in it are still active, plus a small icon
@@ -111,7 +110,7 @@ these files in. Takes about 5 minutes.
   automatically when you leave the editor.
 - **Design**: monochrome throughout (system backgrounds/text, which
   already adapt to light/dark), with a single coral accent for anything
-  interactive or "on" — pins, ticked notes, buttons, the Face ID ring.
+  interactive or "on" — pins, ticked notes, buttons, the passcode dots.
 
 ## What it deliberately doesn't do
 
@@ -130,7 +129,7 @@ these files in. Takes about 5 minutes.
 
 ```
 Crank/
-  CrankApp.swift                 — app entry point, Face ID gate, SwiftData container
+  CrankApp.swift                 — app entry point, passcode gate, SwiftData container
   Theme/
     Color+Crank.swift             — the one accent color token (Color.coral)
   Models/
@@ -139,7 +138,7 @@ Crank/
     NoteImage.swift                  — one attached photo, belongs to a Note
     NoteDocument.swift                 — one attached document, belongs to a Note
   Views/
-    LockScreenView.swift            — ident reveal + animated Face ID entry screen
+    LockScreenView.swift            — ident reveal + 4-digit passcode entry screen
     HomeView.swift                   — pinned notes (capped) + searchable project list
     ProjectRowView.swift              — one row on the home screen
     ProjectIconView.swift              — the coral icon chip, and the curated icon set

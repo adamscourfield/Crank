@@ -1,29 +1,36 @@
 import SwiftUI
-import LocalAuthentication
+import UIKit
 
 struct LockScreenView: View {
     let onUnlock: () -> Void
 
+    /// Hardcoded on purpose: this app has no settings UI for changing it,
+    /// and the threat model is "keep casual snoopers off my phone," not
+    /// "withstand someone who can read the app's source." Change this one
+    /// constant if you want a different code.
+    private static let correctPasscode = "2501"
+
     private enum Phase {
         case ident
-        case lock
+        case passcode
     }
 
     private let wordmark = Array("CRANK")
+    private let keypadRows: [[String]] = [
+        ["1", "2", "3"],
+        ["4", "5", "6"],
+        ["7", "8", "9"],
+        ["", "0", "⌫"]
+    ]
 
     @State private var phase: Phase = .ident
     @State private var lettersVisible: [Bool] = Array(repeating: false, count: 5)
     @State private var underlineWidth: CGFloat = 0
     @State private var identOpacity: Double = 1
 
-    @State private var wordmarkOpacity: Double = 0
-    @State private var wordmarkScale: CGFloat = 0.85
-    @State private var ringScale: CGFloat = 0.9
-    @State private var ringOpacity: Double = 0.5
-    @State private var isAuthenticating = false
-    @State private var authFailed = false
-    @State private var biometryUnavailable = false
-    @State private var statusText = "Face ID to unlock"
+    @State private var enteredDigits: [Int] = []
+    @State private var showError = false
+    @State private var shakeOffset: CGFloat = 0
 
     var body: some View {
         ZStack {
@@ -33,7 +40,8 @@ struct LockScreenView: View {
                 identView
                     .opacity(identOpacity)
             } else {
-                lockView
+                passcodeView
+                    .transition(.opacity)
             }
         }
         .onAppear { runIdent() }
@@ -58,79 +66,73 @@ struct LockScreenView: View {
         }
     }
 
-    private var lockView: some View {
-        ZStack {
-            Circle()
-                .stroke(Color.coral.opacity(0.5), lineWidth: 1.5)
-                .frame(width: 220, height: 220)
-                .scaleEffect(ringScale)
-                .opacity(ringOpacity)
-
-            Circle()
-                .stroke(Color.coral.opacity(0.3), lineWidth: 1)
-                .frame(width: 220, height: 220)
-                .scaleEffect(ringScale * 1.15)
-                .opacity(ringOpacity * 0.6)
-
-            VStack(spacing: 28) {
+    private var passcodeView: some View {
+        VStack(spacing: 40) {
+            VStack(spacing: 20) {
                 Text("CRANK")
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .tracking(7)
-                    .foregroundStyle(.primary)
-                    .opacity(wordmarkOpacity)
-                    .scaleEffect(wordmarkScale)
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .tracking(5)
+                    .foregroundStyle(.secondary)
 
-                VStack(spacing: 14) {
-                    Group {
-                        if isAuthenticating {
-                            ProgressView()
-                                .tint(Color.coral)
-                        } else {
-                            Image(systemName: "faceid")
-                                .font(.system(size: 30, weight: .medium))
-                                .foregroundStyle(authFailed ? Color.coral : Color.secondary)
-                        }
-                    }
-                    .frame(height: 36)
+                dotsRow
+                    .offset(x: shakeOffset)
 
-                    Text(statusText)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .tracking(1)
+                Text(showError ? "Incorrect Passcode" : " ")
+                    .font(.caption)
+                    .foregroundStyle(Color.coral)
+            }
 
-                    if authFailed || biometryUnavailable {
-                        Button(biometryUnavailable ? "Continue" : "Try Again") {
-                            if biometryUnavailable {
-                                onUnlock()
-                            } else {
-                                authenticate()
-                            }
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(Color.coral)
-                        .padding(.top, 4)
-                    }
+            keypad
+        }
+        .padding(.bottom, 40)
+    }
 
-                    Button("Replay Intro", action: replayIntro)
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                        .padding(.top, 10)
-                }
-                .opacity(wordmarkOpacity)
+    private var dotsRow: some View {
+        HStack(spacing: 18) {
+            ForEach(0..<4, id: \.self) { index in
+                Circle()
+                    .strokeBorder(Color.coral, lineWidth: 1.5)
+                    .background(Circle().fill(index < enteredDigits.count ? Color.coral : Color.clear))
+                    .frame(width: 14, height: 14)
             }
         }
-        .onAppear {
-            withAnimation(.easeOut(duration: 0.7)) {
-                wordmarkOpacity = 1
-                wordmarkScale = 1
+    }
+
+    private var keypad: some View {
+        VStack(spacing: 18) {
+            ForEach(keypadRows, id: \.self) { row in
+                HStack(spacing: 18) {
+                    ForEach(row, id: \.self) { key in
+                        keypadButton(key)
+                    }
+                }
             }
-            withAnimation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true)) {
-                ringScale = 1.08
-                ringOpacity = 0.15
+        }
+    }
+
+    @ViewBuilder
+    private func keypadButton(_ key: String) -> some View {
+        if key.isEmpty {
+            Color.clear.frame(width: 68, height: 68)
+        } else if key == "⌫" {
+            Button(action: deleteDigit) {
+                Image(systemName: "delete.left")
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundStyle(.primary)
+                    .frame(width: 68, height: 68)
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                authenticate()
+            .buttonStyle(PressableButtonStyle())
+        } else {
+            Button {
+                tapDigit(Int(key)!)
+            } label: {
+                Text(key)
+                    .font(.system(size: 26, weight: .medium, design: .rounded))
+                    .foregroundStyle(.primary)
+                    .frame(width: 68, height: 68)
+                    .background(Color(.secondarySystemBackground), in: Circle())
             }
+            .buttonStyle(PressableButtonStyle())
         }
     }
 
@@ -151,50 +153,60 @@ struct LockScreenView: View {
             }
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) {
-            phase = .lock
+            withAnimation(.easeOut(duration: 0.3)) {
+                phase = .passcode
+            }
         }
     }
 
-    private func replayIntro() {
-        wordmarkOpacity = 0
-        wordmarkScale = 0.85
-        isAuthenticating = false
-        authFailed = false
-        biometryUnavailable = false
-        statusText = "Face ID to unlock"
-        lettersVisible = Array(repeating: false, count: 5)
-        underlineWidth = 0
-        identOpacity = 1
-        phase = .ident
-        runIdent()
+    private func tapDigit(_ digit: Int) {
+        guard enteredDigits.count < 4 else { return }
+        showError = false
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        enteredDigits.append(digit)
+        if enteredDigits.count == 4 {
+            checkPasscode()
+        }
     }
 
-    private func authenticate() {
-        let context = LAContext()
-        var error: NSError?
+    private func deleteDigit() {
+        guard !enteredDigits.isEmpty else { return }
+        enteredDigits.removeLast()
+    }
 
-        guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) else {
-            biometryUnavailable = true
-            statusText = "Face ID isn't set up on this device"
-            return
+    private func checkPasscode() {
+        let entered = enteredDigits.map(String.init).joined()
+        if entered == Self.correctPasscode {
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                onUnlock()
+            }
+        } else {
+            UINotificationFeedbackGenerator().notificationOccurred(.error)
+            showError = true
+            shake()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                enteredDigits = []
+            }
         }
+    }
 
-        isAuthenticating = true
-        authFailed = false
-        biometryUnavailable = false
-        statusText = "Scanning..."
-
-        context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: "Unlock your notes") { success, _ in
-            DispatchQueue.main.async {
-                isAuthenticating = false
-                if success {
-                    statusText = "Welcome back"
-                    onUnlock()
-                } else {
-                    authFailed = true
-                    statusText = "Face ID failed"
+    private func shake() {
+        let steps: [CGFloat] = [-10, 10, -6, 6, 0]
+        for (index, value) in steps.enumerated() {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.06) {
+                withAnimation(.easeInOut(duration: 0.06)) {
+                    shakeOffset = value
                 }
             }
         }
+    }
+}
+
+private struct PressableButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.92 : 1)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }
