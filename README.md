@@ -37,11 +37,14 @@ these files in. Takes about 5 minutes.
    your Xcode project's `Crank` group. Choose "Copy items if needed" and
    make sure the `Crank` target is checked.
 
-4. **Add the accent color.** Drag `Crank/Resources/AccentColor.colorset`
-   into your project's `Assets.xcassets` in Xcode's navigator (it'll
-   offer to replace the template's blank `AccentColor` — let it). This is
-   what makes buttons, pins, checked notes, and the passcode dots all
-   pick up the coral tint automatically.
+4. **Add the accent color and app icon.** Drag both
+   `Crank/Resources/AccentColor.colorset` and
+   `Crank/Resources/AppIcon.appiconset` into your project's
+   `Assets.xcassets` in Xcode's navigator — it'll offer to replace the
+   template's blank `AccentColor` and `AppIcon` entries; let it replace
+   both. The accent color is what makes buttons, pins, checked notes,
+   and the passcode dots pick up the coral tint automatically; the app
+   icon is what shows on your home screen instead of Xcode's placeholder.
 
 5. **Add a privacy usage description for the camera.** Select the `Crank`
    target → Info tab → add this row. **It's required** — the app crashes
@@ -154,4 +157,5 @@ Crank/
     ImageViewerView.swift                         — full-screen photo viewer
   Resources/
     AccentColor.colorset/                       — the coral accent, light + dark variants
+    AppIcon.appiconset/                           — the home-screen icon (coral, an abstract C/checkmark hybrid)
 ```
