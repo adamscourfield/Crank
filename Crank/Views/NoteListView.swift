@@ -38,7 +38,7 @@ struct NoteListView: View {
                             } label: {
                                 Label(note.isPinned ? "Unpin" : "Pin", systemImage: note.isPinned ? "pin.slash" : "pin")
                             }
-                            .tint(.orange)
+                            .tint(Color.coral)
                         }
                 }
             }

@@ -58,7 +58,7 @@ private struct ChecklistRow: View {
                 item.isDone.toggle()
             } label: {
                 Image(systemName: item.isDone ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(item.isDone ? .green : .secondary)
+                    .foregroundStyle(item.isDone ? Color.coral : Color.secondary)
             }
             .buttonStyle(.plain)
 

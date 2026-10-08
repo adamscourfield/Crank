@@ -29,7 +29,7 @@ struct NoteRowView: View {
                     if note.isPinned {
                         Image(systemName: "pin.fill")
                             .font(.caption2)
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(Color.coral)
                     }
                     Text(note.title.isEmpty ? "Untitled" : note.title)
                         .font(.headline)
