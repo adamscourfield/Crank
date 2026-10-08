@@ -21,6 +21,14 @@ these files in. Takes about 5 minutes.
 
 ## Setup
 
+If you already have a Crank Xcode project from an earlier version of
+this README and it's gotten into a confusing state (stray files,
+duplicate `@main`, asset catalog errors), the fastest way forward is
+a clean restart: in Finder, trash the whole project folder you
+created on your Mac, then follow these steps fresh. Nothing here
+touches this git repo, only the separate Xcode project folder you
+built from it.
+
 1. **Create the project.** Xcode → File → New → Project → iOS → App.
    - Product Name: `Crank`
    - Interface: SwiftUI
@@ -30,21 +38,25 @@ these files in. Takes about 5 minutes.
 
 2. **Remove the generated defaults.** Delete the template's `Item.swift`,
    `ContentView.swift`, and its own `CrankApp.swift` — you're replacing all
-   three with the ones in this repo.
+   three with the ones in this repo. (Deleting the app file will show
+   build errors until step 3 — that's expected.)
 
 3. **Add the source files.** In Finder, drag the contents of this repo's
-   `Crank/` folder (`CrankApp.swift`, `Models/`, `Views/`, `Theme/`) into
-   your Xcode project's `Crank` group. Choose "Copy items if needed" and
-   make sure the `Crank` target is checked.
+   `Crank/` folder (`CrankApp.swift`, `Models/`, `Views/`, `Theme/` —
+   **not** `Resources/`, that's step 4) into your Xcode project's `Crank`
+   group. Choose "Copy items if needed" and make sure the `Crank` target
+   is checked.
 
-4. **Add the accent color and app icon.** Drag both
-   `Crank/Resources/AccentColor.colorset` and
-   `Crank/Resources/AppIcon.appiconset` into your project's
-   `Assets.xcassets` in Xcode's navigator — it'll offer to replace the
-   template's blank `AccentColor` and `AppIcon` entries; let it replace
-   both. The accent color is what makes buttons, pins, checked notes,
-   and the passcode dots pick up the coral tint automatically; the app
-   icon is what shows on your home screen instead of Xcode's placeholder.
+4. **Replace the asset catalog.** In Xcode's navigator, delete the
+   template's own `Assets.xcassets` (Delete → Move to Trash — it's just
+   the generated placeholder, safe to remove). Then drag this repo's
+   `Crank/Resources/Assets.xcassets` folder into the same place in the
+   navigator, "Copy items if needed" checked. That one folder already
+   has the accent color and the app icon correctly nested inside it —
+   one drag, not two, which avoids an asset-catalog mixup. The accent
+   color is what makes buttons, pins, checked notes, and the passcode
+   dots pick up the coral tint automatically; the app icon is what
+   shows on your home screen instead of Xcode's placeholder.
 
 5. **Add a privacy usage description for the camera.** Select the `Crank`
    target → Info tab → add this row. **It's required** — the app crashes
@@ -156,6 +168,7 @@ Crank/
     CameraCaptureView.swift                      — UIImagePickerController wrapper for the camera
     ImageViewerView.swift                         — full-screen photo viewer
   Resources/
-    AccentColor.colorset/                       — the coral accent, light + dark variants
-    AppIcon.appiconset/                           — the home-screen icon (coral, an abstract C/checkmark hybrid)
+    Assets.xcassets/                             — the one asset catalog; drag this whole folder in, not its children individually
+      AccentColor.colorset/                       — the coral accent, light + dark variants
+      AppIcon.appiconset/                           — the home-screen icon (coral, an abstract C/checkmark hybrid)
 ```
