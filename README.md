@@ -1,20 +1,174 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# CRANK
 
-# Run and deploy your AI Studio app
+A personal, local-only project and notes app for iPhone: projects contain
+tick-box notes, pinned notes surface on the home screen, and notes can hold
+photos and documents (including from Google Drive) — all locked behind
+a 4-digit passcode, styled monochrome with coral accents. No accounts, no
+sync, no third party, nobody else's eyes on it but yours.
 
-This contains everything you need to run your app locally.
+This repo contains Swift source files only, not an `.xcodeproj`. Xcode's
+own "New Project" wizard generates a more reliable project file than a
+hand-written one, so you'll create the project shell in Xcode and drop
+these files in. Takes about 5 minutes.
 
-View your app in AI Studio: https://ai.studio/apps/167e04f8-2ac3-4ffb-8473-60cf6534d0d2
+## Requirements
 
-## Run Locally
+- A Mac with Xcode 15 or later (free from the Mac App Store)
+- An iPhone running iOS 17 or later
+- A free Apple ID (no paid developer account needed) — see signing note below
+- Optionally, the Google Drive app installed on the iPhone if you want
+  Drive files to show up as an attachment source (see below)
 
-**Prerequisites:**  Node.js
+## Setup
 
+If you already have a Crank Xcode project from an earlier version of
+this README and it's gotten into a confusing state (stray files,
+duplicate `@main`, asset catalog errors), the fastest way forward is
+a clean restart: in Finder, trash the whole project folder you
+created on your Mac, then follow these steps fresh. Nothing here
+touches this git repo, only the separate Xcode project folder you
+built from it.
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+1. **Create the project.** Xcode → File → New → Project → iOS → App.
+   - Product Name: `Crank`
+   - Interface: SwiftUI
+   - Storage: SwiftData
+   - Uncheck "Include Tests" (optional)
+   - Save it wherever you like on your Mac (this can be outside the git repo).
+
+2. **Remove the generated defaults.** Delete the template's `Item.swift`,
+   `ContentView.swift`, and its own `CrankApp.swift` — you're replacing all
+   three with the ones in this repo. (Deleting the app file will show
+   build errors until step 3 — that's expected.)
+
+3. **Add the source files.** In Finder, drag the contents of this repo's
+   `Crank/` folder (`CrankApp.swift`, `Models/`, `Views/`, `Theme/` —
+   **not** `Resources/`, that's step 4) into your Xcode project's `Crank`
+   group. Choose "Copy items if needed" and make sure the `Crank` target
+   is checked.
+
+4. **Replace the asset catalog.** In Xcode's navigator, delete the
+   template's own `Assets.xcassets` (Delete → Move to Trash — it's just
+   the generated placeholder, safe to remove). Then drag this repo's
+   `Crank/Resources/Assets.xcassets` folder into the same place in the
+   navigator, "Copy items if needed" checked. That one folder already
+   has the accent color and the app icon correctly nested inside it —
+   one drag, not two, which avoids an asset-catalog mixup. The accent
+   color is what makes buttons, pins, checked notes, and the passcode
+   dots pick up the coral tint automatically; the app icon is what
+   shows on your home screen instead of Xcode's placeholder.
+
+5. **Add a privacy usage description for the camera.** Select the `Crank`
+   target → Info tab → add this row. **It's required** — the app crashes
+   the moment it tries to use the camera without it:
+   - Key: `Privacy - Camera Usage Description` (`NSCameraUsageDescription`)
+     Value: `Crank uses the camera to attach photos to your notes.`
+
+6. **Set the deployment target.** Target → General → Minimum Deployments
+   → iOS 17.0 (required for SwiftData).
+
+7. **Sign the app.** Target → Signing & Capabilities → set your Team to
+   your personal Apple ID. A free Apple ID signs builds for 7 days at a
+   time — just re-run from Xcode once a week to keep it working. A
+   $99/year Apple Developer account signs for a full year instead.
+
+8. **Run it on your phone.** Plug your iPhone into your Mac (or use
+   wireless debugging), select it as the run destination, and hit Run
+   (⌘R). First launch, your iPhone will ask you to trust the developer
+   certificate under Settings → General → VPN & Device Management.
+
+## What it does
+
+- **Entry screen**: "CRANK" builds in letter by letter with a coral
+  underline draw-in (a brief ident, like a production company bumper),
+  then crossfades into a 4-digit passcode screen — dot indicators and a
+  numeric keypad, matching the rest of the app's design rather than
+  using the system's own passcode UI. The correct code is `2501`,
+  hardcoded as a single constant at the top of `LockScreenView.swift`
+  (there's no settings screen to change it from — edit that constant
+  directly if you want a different one). A wrong code shakes the dots
+  and clears; checked once at launch, not on every return to the
+  foreground — easy to tighten later if you want that.
+- **Home screen**: any pinned notes appear first, above your list of
+  projects, both searchable (`Search notes and projects`). Each project
+  row shows how many notes in it are still active, plus a small icon
+  chip you choose when creating it. Pinned notes are capped at 4 by
+  default with a "+N more pinned" expander, so a growing pinned list
+  doesn't take over the home screen — search bypasses the cap and shows
+  every match.
+- **Projects**: the top-level container. Create as many as you like,
+  each with a name and an icon picked from a small curated set (folder,
+  briefcase, wrench, house, sun, and a few others); every row and header
+  that shows the project reuses that same icon chip.
+- **Notes are the tick-box**: every note has a checkbox. Ticking it plays
+  a brief fill-and-collapse (not an instant vanish) before it archives —
+  there's no separate "done" vs "archived" state to think about once
+  that finishes. Each project has an Archive screen for anything you've
+  ticked off, with a swipe action to restore a note if you ticked it by
+  mistake. A project's note list is also searchable once it grows.
+- **Pinning**: any note can be pinned, independent of its project —
+  pinned, non-archived notes are what shows up on the home screen.
+- Created and completed dates are recorded and shown on the note, but
+  purely as information — nothing in the app treats them as a deadline.
+- **Photos**: attach from your library (`PhotosPicker`, no extra
+  permission prompt) or take one directly in the app with the camera
+  button. Thumbnails get a rounded corner, a hairline border, and a soft
+  shadow so they read as deliberate, not slapped-on; tap one to view it
+  full-screen.
+- **Documents**: tap "Add Document" to open the system file browser, which
+  lists iCloud Drive, On My iPhone, and — if you have the Google Drive app
+  installed — your Drive files too, since Drive registers itself as a
+  Files provider. Whatever you pick is copied into the note (same as
+  photos), so the note stays self-contained even if the original file
+  later moves. Tap a document to preview it with QuickLook.
+- Empty notes (no title, body, photos, or documents) are discarded
+  automatically when you leave the editor.
+- **Design**: monochrome throughout (system backgrounds/text, which
+  already adapt to light/dark), with a single coral accent for anything
+  interactive or "on" — pins, ticked notes, buttons, the passcode dots.
+
+## What it deliberately doesn't do
+
+- No iCloud sync — everything lives only on this one phone.
+- No sharing, collaboration, or export — single-user by design.
+- No live connection to Google Drive — picking a Drive file copies it in
+  once; the note won't reflect later edits made to the original in Drive.
+- No renaming a project after creation, and no reordering projects —
+  straightforward to add if you find you want it.
+- No syncing Crank between devices (e.g. an iPhone and a Mac build) —
+  that would mean either CloudKit (which needs a paid Apple Developer
+  account) or building a real local-network sync protocol ourselves;
+  deliberately out of scope for a personal, single-device app.
+
+## File layout
+
+```
+Crank/
+  CrankApp.swift                 — app entry point, passcode gate, SwiftData container
+  Theme/
+    Color+Crank.swift             — the one accent color token (Color.coral)
+  Models/
+    Project.swift                  — top-level container; name, icon, holds notes
+    Note.swift                      — the tick-box note: title, body, pin, archive state, dates
+    NoteImage.swift                  — one attached photo, belongs to a Note
+    NoteDocument.swift                 — one attached document, belongs to a Note
+  Views/
+    LockScreenView.swift            — ident reveal + 4-digit passcode entry screen
+    HomeView.swift                   — pinned notes (capped) + searchable project list
+    ProjectRowView.swift              — one row on the home screen
+    ProjectIconView.swift              — the coral icon chip, and the curated icon set
+    NewProjectView.swift                — name + icon picker sheet for creating a project
+    PinnedNoteRow.swift                   — one pinned-note row on the home screen
+    ProjectDetailView.swift                — active notes inside a project, searchable
+    ArchiveView.swift                       — completed notes for a project
+    NoteRowView.swift                        — one row inside a project (tick box + thumbnail)
+    NoteDetailView.swift                      — the note editor
+    DocumentRowView.swift                      — one attached-document row
+    DocumentPreviewView.swift                   — QuickLook wrapper for documents
+    CameraCaptureView.swift                      — UIImagePickerController wrapper for the camera
+    ImageViewerView.swift                         — full-screen photo viewer
+  Resources/
+    Assets.xcassets/                             — the one asset catalog; drag this whole folder in, not its children individually
+      AccentColor.colorset/                       — the coral accent, light + dark variants
+      AppIcon.appiconset/                           — the home-screen icon (coral, an abstract C/checkmark hybrid)
+```

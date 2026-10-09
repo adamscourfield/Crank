@@ -1,8 +1,8 @@
-node_modules/
-build/
-dist/
-coverage/
 .DS_Store
-*.log
-.env*
-!.env.example
+xcuserdata/
+DerivedData/
+*.xcodeproj/project.xcworkspace/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+.build/
+.swiftpm/
