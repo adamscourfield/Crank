@@ -55,6 +55,7 @@ struct NoteDetailView: View {
                         PhotosPicker(selection: $selectedPhotoItems, matching: .images) {
                             Label("Library", systemImage: "photo.on.rectangle.angled")
                         }
+                        .buttonStyle(.plain)
                         Spacer()
                         Button {
                             if UIImagePickerController.isSourceTypeAvailable(.camera) {
@@ -65,6 +66,7 @@ struct NoteDetailView: View {
                         } label: {
                             Label("Camera", systemImage: "camera.fill")
                         }
+                        .buttonStyle(.plain)
                     }
                 }
 
