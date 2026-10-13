@@ -38,7 +38,11 @@ final class Note {
     }
 
     var sortedDocuments: [NoteDocument] {
-        documents.sorted { $0.sortOrder < $1.sortOrder }
+        documents.filter { !$0.isAudio }.sorted { $0.sortOrder < $1.sortOrder }
+    }
+
+    var sortedAudio: [NoteDocument] {
+        documents.filter(\.isAudio).sorted { $0.sortOrder < $1.sortOrder }
     }
 
     /// Ticking a note marks it done and archives it in one step; there is no

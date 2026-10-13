@@ -3,11 +3,16 @@ import SwiftData
 import PhotosUI
 import UniformTypeIdentifiers
 import UIKit
+import AVFoundation
 
 struct NoteDetailView: View {
     @Bindable var note: Note
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+
+    @Environment(\.scenePhase) private var scenePhase
+    @StateObject private var audio = NoteAudioController()
+    @State private var showingLeaveAudioAlert = false
 
     @State private var selectedPhotoItems: [PhotosPickerItem] = []
     @State private var fullScreenImage: NoteImage?
@@ -48,6 +53,8 @@ struct NoteDetailView: View {
                         }
                     }
                 }
+
+                NoteAudioSection(note: note, audio: audio)
 
                 Section("Photos") {
                     imageGrid
@@ -98,8 +105,41 @@ struct NoteDetailView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+                    Button("Done") {
+                        if audio.isRecording || audio.draftURL != nil {
+                            audio.stopRecording()
+                            showingLeaveAudioAlert = true
+                        } else {
+                            dismiss()
+                        }
+                    }
                 }
+            }
+            .interactiveDismissDisabled(audio.isRecording || audio.draftURL != nil || audio.isRequestingPermission)
+            .navigationBarBackButtonHidden(audio.isRecording || audio.draftURL != nil)
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .background { audio.suspend() }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: AVAudioSession.interruptionNotification)) { _ in
+                audio.suspend()
+            }
+            .onDisappear { audio.close() }
+            .alert("Unsaved recording", isPresented: $showingLeaveAudioAlert) {
+                Button("Keep editing", role: .cancel) {}
+                Button("Discard and leave", role: .destructive) {
+                    audio.discardDraft()
+                    dismiss()
+                }
+            } message: {
+                Text("Save your recording in the Audio section before leaving, or discard it.")
+            }
+            .alert("Audio", isPresented: Binding(
+                get: { audio.errorMessage != nil },
+                set: { if !$0 { audio.errorMessage = nil } }
+            )) {
+                Button("OK", role: .cancel) { audio.errorMessage = nil }
+            } message: {
+                Text(audio.errorMessage ?? "")
             }
             .onChange(of: selectedPhotoItems) { _, newItems in
                 Task { await addImages(from: newItems) }

@@ -51,8 +51,13 @@ struct NoteRowView: View {
                         .lineLimit(2)
                 }
                 HStack(spacing: 10) {
-                    if !note.documents.isEmpty {
-                        Label("\(note.documents.count)", systemImage: "paperclip")
+                    if !note.sortedAudio.isEmpty {
+                        Label("\(note.sortedAudio.count)", systemImage: "waveform")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    }
+                    if !note.sortedDocuments.isEmpty {
+                        Label("\(note.sortedDocuments.count)", systemImage: "paperclip")
                             .font(.caption2)
                             .foregroundStyle(.tertiary)
                     }

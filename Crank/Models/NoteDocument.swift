@@ -19,6 +19,11 @@ final class NoteDocument {
         self.createdAt = .now
     }
 
+    // Audio uses the existing document entity: no new stored fields or schema migration.
+    var isAudio: Bool {
+        ["m4a", "mp3", "wav", "aif", "aiff", "caf", "aac"].contains(fileExtension.lowercased())
+    }
+
     /// QuickLook previews from a file URL, not raw Data, so attached
     /// documents are written out to a scratch file on demand.
     func writeToTemporaryURL() -> URL? {

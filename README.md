@@ -64,15 +64,19 @@ built from it.
    - Key: `Privacy - Camera Usage Description` (`NSCameraUsageDescription`)
      Value: `Crank uses the camera to attach photos to your notes.`
 
-6. **Set the deployment target.** Target → General → Minimum Deployments
+6. **Add microphone permission.** In the same target Info tab, add:
+   - Key: `Privacy - Microphone Usage Description` (`NSMicrophoneUsageDescription`)
+     Value: `Crank uses the microphone to record audio attached to your notes.`
+
+7. **Set the deployment target.** Target → General → Minimum Deployments
    → iOS 17.0 (required for SwiftData).
 
-7. **Sign the app.** Target → Signing & Capabilities → set your Team to
+8. **Sign the app.** Target → Signing & Capabilities → set your Team to
    your personal Apple ID. A free Apple ID signs builds for 7 days at a
    time — just re-run from Xcode once a week to keep it working. A
    $99/year Apple Developer account signs for a full year instead.
 
-8. **Run it on your phone.** Plug your iPhone into your Mac (or use
+9. **Run it on your phone.** Plug your iPhone into your Mac (or use
    wireless debugging), select it as the run destination, and hit Run
    (⌘R). First launch, your iPhone will ask you to trust the developer
    certificate under Settings → General → VPN & Device Management.
@@ -110,6 +114,13 @@ built from it.
   pinned, non-archived notes are what shows up on the home screen.
 - Created and completed dates are recorded and shown on the note, but
   purely as information — nothing in the app treats them as a deadline.
+- **Audio**: the Audio section in a note records from the microphone. Stop,
+  then save or discard the recording. Saved clips can be renamed, played,
+  paused, or deleted with a swipe. Going into the background or receiving
+  an audio interruption stops recording and retains the draft for review.
+  Leaving the editor with an unsaved draft asks whether to keep editing or
+  discard it. Audio is stored locally as an existing `NoteDocument` attachment
+  (`m4a`), preserving the existing SwiftData schema. Audio-only notes are kept.
 - **Photos**: attach from your library (`PhotosPicker`, no extra
   permission prompt) or take one directly in the app with the camera
   button. Thumbnails get a rounded corner, a hairline border, and a soft
@@ -147,6 +158,8 @@ Crank/
   CrankApp.swift                 — app entry point, passcode gate, SwiftData container
   Theme/
     Color+Crank.swift             — the one accent color token (Color.coral)
+  Audio/
+    NoteAudioController.swift                 — microphone, playback, and interruption handling
   Models/
     Project.swift                  — top-level container; name, icon, holds notes
     Note.swift                      — the tick-box note: title, body, pin, archive state, dates
@@ -163,6 +176,7 @@ Crank/
     ArchiveView.swift                       — completed notes for a project
     NoteRowView.swift                        — one row inside a project (tick box + thumbnail)
     NoteDetailView.swift                      — the note editor
+    NoteAudioSection.swift                    — inline recorder and saved audio playback
     DocumentRowView.swift                      — one attached-document row
     DocumentPreviewView.swift                   — QuickLook wrapper for documents
     CameraCaptureView.swift                      — UIImagePickerController wrapper for the camera
@@ -172,3 +186,17 @@ Crank/
       AccentColor.colorset/                       — the coral accent, light + dark variants
       AppIcon.appiconset/                           — the home-screen icon (coral, an abstract C/checkmark hybrid)
 ```
+
+## Updating an existing installation
+
+Use the original Xcode project with its existing bundle identifier and signing
+team. Install over the current app; do not uninstall it. Keep the model container
+configuration and storage location unchanged. Back up `Library/Application Support`
+from the app's data container, including the database, WAL, and hidden external
+attachment directory, before updating. The audio feature adds no stored model
+properties or entities and requires no schema migration.
+
+`Tests/StoreCompatibilityCheck.swift` can be compiled with the four model files
+using the macOS Swift toolchain. Pass a **disposable copy** of `default.store`,
+plus an optional playable audio fixture, to check that existing data opens and
+audio attachment save/read/rename/archive/delete operations preserve its contents.
